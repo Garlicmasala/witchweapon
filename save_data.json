@@ -1,0 +1,84 @@
+{
+    "player": {
+        "level": 1,
+        "exp": 0,
+        "exp_to_next": 100,
+        "max_level": 20,
+        "base_hp": 100,
+        "base_atk": 10,
+        "base_def": 5,
+        "enhanced_hp": 0,
+        "enhanced_atk": 0,
+        "enhanced_def": 0,
+        "health": 100,
+        "mana": 50,
+        "position": [
+            0,
+            0,
+            0
+        ],
+        "current_weapon": "Basic Sword",
+        "ultimate_cooldown": 0
+    },
+    "weapons": {
+        "Basic Sword": {
+            "name": "Basic Sword",
+            "base_damage": 10,
+            "duration": 0,
+            "current_duration": 0,
+            "rarity": "R",
+            "affection": 0,
+            "affection_level": 1,
+            "affection_to_next": 50,
+            "atk_bonus": 0,
+            "def_bonus": 0,
+            "enhanced_damage": 0,
+            "enhancement_level": 0
+        },
+        "Magic Wand": {
+            "name": "Magic Wand",
+            "base_damage": 15,
+            "duration": 0,
+            "current_duration": 0,
+            "rarity": "SR",
+            "affection": 0,
+            "affection_level": 1,
+            "affection_to_next": 50,
+            "atk_bonus": 0,
+            "def_bonus": 0,
+            "enhanced_damage": 0,
+            "enhancement_level": 0
+        },
+        "Fire Staff": {
+            "name": "Fire Staff",
+            "base_damage": 20,
+            "duration": 3,
+            "current_duration": 3,
+            "rarity": "SR",
+            "affection": 0,
+            "affection_level": 1,
+            "affection_to_next": 50,
+            "atk_bonus": 0,
+            "def_bonus": 0,
+            "enhanced_damage": 0,
+            "enhancement_level": 0
+        }
+    },
+    "materials": {
+        "Iron Ore": 10,
+        "Magic Crystal": 5,
+        "Rare Gem": 2
+    },
+    "breakthrough_level": 0,
+    "currency": {
+        "Gacha Gem": 1000,
+        "Gacha Ticket": 5
+    },
+    "gacha": {
+        "pity_counters": {
+            "Standard Banner": 0,
+            "Event Banner": 0,
+            "Step-Up Banner": 0
+        }
+    }
+}
