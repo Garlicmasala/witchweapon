@@ -134,7 +134,7 @@ class GachaManager:
                 BannerEntry(BannerItem("Moon Staff", Rarity.SR, 18), 17.0),
                 BannerEntry(BannerItem("Abyss Rod", Rarity.SR, 22), 7.0),
                 BannerEntry(BannerItem("Spellbound Shawl", Rarity.SR, item_category="accessory", bonuses={"DEF": 3}, description="A radiant shawl that bolsters defensive resolve."), 4.0),
-                BannerEntry(BannerItem("Supernova Lance", Rarity.SSR, 40), 4.0)
+                BannerEntry(BannerItem("Supernova Lance", Rarity.SSR, 40), 6.0)
             ],
             single_cost={"Gacha Gem": 120},
             multi_cost={"Gacha Gem": 1080},

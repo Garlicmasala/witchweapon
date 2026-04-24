@@ -10,10 +10,11 @@ from .pvp_matchmaking import PvPMatchmaker, MatchmakingMode
 class PvPMenu:
     """PvP main menu and mode selection."""
     
-    def __init__(self, ui_feedback, player, matchmaker: PvPMatchmaker):
+    def __init__(self, ui_feedback, player, matchmaker: PvPMatchmaker, daily_mission_manager=None):
         self.ui = ui_feedback
         self.player = player
         self.matchmaker = matchmaker
+        self.daily_mission_manager = daily_mission_manager
         self.current_menu = "main"
 
     def display_main_menu(self):
@@ -137,6 +138,8 @@ class PvPMenu:
             # Check if match was created
             if self.matchmaker.get_active_matches_count() > 0:
                 self.ui.display_message("Match starting...")
+                if self.daily_mission_manager:
+                    self.daily_mission_manager.on_pvp_match_played()
         else:
             self.ui.display_message(f"Queue failed: {message}")
 
@@ -151,6 +154,8 @@ class PvPMenu:
         
         if success:
             self.ui.display_message(message)
+            if self.daily_mission_manager:
+                self.daily_mission_manager.on_pvp_match_played()
         else:
             self.ui.display_message(f"Failed to start: {message}")
 

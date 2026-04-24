@@ -11,15 +11,17 @@ class WeaponSkinType(Enum):
     SKIN = "Skin"
     EFFECT = "Effect"
     ANIMATION = "Animation"
+    STANCE = "Stance"
 
 class WeaponSkin:
-    def __init__(self, name: str, skin_type: WeaponSkinType, rarity: Rarity, bonuses: Dict[str, float], description: str = "", visual_changes: Dict[str, str] = None):
+    def __init__(self, name: str, skin_type: WeaponSkinType, rarity: Rarity, bonuses: Dict[str, float], description: str = "", visual_changes: Dict[str, str] = None, allowed_in_pvp: bool = True):
         self.name = name
         self.skin_type = skin_type
         self.rarity = rarity
         self.bonuses = bonuses.copy()
         self.description = description
         self.visual_changes = visual_changes or {}
+        self.allowed_in_pvp = allowed_in_pvp
 
     def to_dict(self):
         return {
@@ -28,7 +30,8 @@ class WeaponSkin:
             "rarity": self.rarity.name,
             "bonuses": self.bonuses,
             "description": self.description,
-            "visual_changes": self.visual_changes
+            "visual_changes": self.visual_changes,
+            "allowed_in_pvp": self.allowed_in_pvp
         }
 
     @classmethod
@@ -39,7 +42,8 @@ class WeaponSkin:
             Rarity[data["rarity"]],
             data["bonuses"],
             data.get("description", ""),
-            data.get("visual_changes", {})
+            data.get("visual_changes", {}),
+            data.get("allowed_in_pvp", True)
         )
 
 class WeaponCustomization:
@@ -86,9 +90,27 @@ class WeaponCustomization:
             return f"{weapon_name} ({skin.name})"
         return weapon_name
 
-    def get_weapon_bonuses(self, weapon_name: str) -> Dict[str, float]:
+    def is_skin_pvp_legal(self, weapon_name: str, skin_name: str) -> bool:
+        if weapon_name not in self.weapon_skins:
+            return False
+        skin = self.weapon_skins[weapon_name].get(skin_name)
+        return bool(skin and skin.allowed_in_pvp)
+
+    def get_weapon_bonuses(self, weapon_name: str, context: str = "PvE") -> Dict[str, float]:
         skin = self.get_equipped_skin(weapon_name)
+        if not skin:
+            return {}
+        if context == "PvP":
+            return {}
         return skin.bonuses if skin else {}
+
+    def get_equipped_visual_changes(self, weapon_name: str, context: str = "PvE") -> Dict[str, str]:
+        skin = self.get_equipped_skin(weapon_name)
+        if not skin:
+            return {}
+        if context == "PvP" and not skin.allowed_in_pvp:
+            return {}
+        return skin.visual_changes
 
     def get_available_skins(self, weapon_name: str) -> List[str]:
         if weapon_name in self.weapon_skins:

@@ -16,13 +16,14 @@ class CombatCell:
     
     def __init__(self, cell_id: str, bounds: Tuple[Tuple[float, float, float], Tuple[float, float, float]],
                  height_tiers: List[HeightTier], enemy_spawn_points: List[Tuple[float, float, float]],
-                 entry_conditions: dict = None, exit_conditions: dict = None):
+                 entry_conditions: dict = None, exit_conditions: dict = None, story_node_id: str = None):
         self.cell_id = cell_id
         self.bounds = bounds  # ((x_min, y_min, z_min), (x_max, y_max, z_max))
         self.height_tiers = height_tiers
         self.enemy_spawn_points = enemy_spawn_points
         self.entry_conditions = entry_conditions or {}
         self.exit_conditions = exit_conditions or {}
+        self.story_node_id = story_node_id
         self.is_active = False
         self.is_cleared = False
     

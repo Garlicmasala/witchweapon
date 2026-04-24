@@ -7,7 +7,9 @@ class CurrencyManager:
     def __init__(self):
         self.balances = {
             "Gacha Gem": 1000,
-            "Gacha Ticket": 5
+            "Gacha Ticket": 5,
+            "Weapon Affinity": 0,
+            "Fashion Token": 0
         }
 
     def can_afford(self, cost):

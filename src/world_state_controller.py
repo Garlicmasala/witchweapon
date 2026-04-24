@@ -3,18 +3,20 @@ World state controller for Witch's Weapon PvE world.
 Handles map events, dynamic encounters, and overall world rules.
 """
 
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from .combat_cell import CombatCell
 from .world_map import WorldMapRoot
 from .enemy_director import EnemyDirector
+from .visual_novel import VisualNovelManager
 
 class WorldStateController:
     """Central controller for world-level state and events."""
     
-    def __init__(self, ui_feedback, world_map: WorldMapRoot, enemy_director: EnemyDirector):
+    def __init__(self, ui_feedback, world_map: WorldMapRoot, enemy_director: EnemyDirector, visual_novel_manager: Optional[VisualNovelManager] = None):
         self.ui = ui_feedback
         self.world_map = world_map
         self.enemy_director = enemy_director
+        self.visual_novel_manager = visual_novel_manager
         self.dynamic_events = []
         self.active_event = None
         self.time_of_day = "day"
@@ -32,9 +34,11 @@ class WorldStateController:
         if self.active_event:
             self.ui.display_message(f"[WorldState] Active event: {self.active_event}")
     
-    def trigger_event(self, event_name: str, cell: CombatCell):
+    def trigger_event(self, event_name: str, cell: CombatCell, story_node_id: str = None):
         self.active_event = event_name
         self.ui.display_message(f"[WorldState] Triggered event: {event_name} in {cell.cell_id}")
+        if story_node_id and self.visual_novel_manager:
+            self.visual_novel_manager.queue_story_node(story_node_id)
     
     def complete_event(self):
         self.ui.display_message(f"[WorldState] Completed event: {self.active_event}")

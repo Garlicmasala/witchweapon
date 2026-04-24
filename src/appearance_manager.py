@@ -16,7 +16,7 @@ class AppearanceCategory(Enum):
     ACCESSORY = "Accessory"
 
 class AppearanceManager:
-    def __init__(self, ui_feedback):
+    def __init__(self, ui_feedback, daily_mission_manager=None):
         self.ui = ui_feedback
         self.armory_system = ArmorySystem()
         self.fashion_system = FashionSystem()
@@ -25,7 +25,8 @@ class AppearanceManager:
             self.armory_system,
             self.fashion_system,
             self.weapon_system,
-            ui_feedback
+            ui_feedback,
+            daily_mission_manager
         )
         self.preview_context = PreviewContext.PVE
 
@@ -47,6 +48,52 @@ class AppearanceManager:
 
     def get_fashion_equipped(self):
         return self.fashion_system.get_equipped_summary()
+
+    def get_combat_modifiers(self, context: str = "PvE") -> Dict[str, float]:
+        modifiers = self.armory_system.get_total_stats(context)
+        if context == "PvE":
+            for weapon_name in self.weapon_system.equipped_skins.keys():
+                weapon_bonuses = self.weapon_system.get_weapon_bonuses(weapon_name, context)
+                for stat, value in weapon_bonuses.items():
+                    modifiers[stat] = modifiers.get(stat, 0) + value
+        return modifiers
+
+    def get_visual_overrides(self, context: str = "PvE") -> Dict[str, str]:
+        visuals = {}
+        visuals.update(self.fashion_system.get_visual_overrides(context))
+        for weapon_name in self.weapon_system.equipped_skins.keys():
+            visuals.update(self.weapon_system.get_equipped_visual_changes(weapon_name, context))
+        return visuals
+
+    def is_pvp_legal(self) -> bool:
+        if not self.fashion_system.is_pvp_legal():
+            return False
+        for weapon_name, skin_name in self.weapon_system.equipped_skins.items():
+            if not self.weapon_system.is_skin_pvp_legal(weapon_name, skin_name):
+                return False
+        return True
+
+    def get_pvp_legality_report(self) -> Dict[str, bool]:
+        report = {
+            "fashion_legal": self.fashion_system.is_pvp_legal(),
+            "weapon_skins_legal": True
+        }
+        for weapon_name, skin_name in self.weapon_system.equipped_skins.items():
+            if not self.weapon_system.is_skin_pvp_legal(weapon_name, skin_name):
+                report["weapon_skins_legal"] = False
+                break
+        report["total_legal"] = report["fashion_legal"] and report["weapon_skins_legal"]
+        return report
+
+    def get_inventory_summary(self):
+        summary = {}
+        for cat in FashionCategory:
+            summary[cat.value] = [item.name for item in self.fashion_system.get_items_by_category(cat)]
+        return summary
+
+    def get_total_bonus(self, stat_name):
+        # Compatibility helper: only armory and PvE weapon bonuses count here.
+        return self.get_combat_modifiers("PvE").get(stat_name, 0)
 
     def get_available_armory_slots(self):
         return list(ArmorySlotType)
@@ -128,16 +175,3 @@ class AppearanceManager:
             # Legacy
             return "None"
         return "None"
-
-    def get_total_bonus(self, stat_name):
-        # Simplified
-        armory_mods = self.armory_system.get_total_stats(self.preview_context.value)
-        fashion_bonuses = self.fashion_system.get_synergy_bonuses()
-        total = armory_mods.get(stat_name, 0) + fashion_bonuses.get(f"synergy_{stat_name.lower()}", 0)
-        return total
-
-    def get_inventory_summary(self):
-        summary = {}
-        for cat in FashionCategory:
-            summary[cat.value] = [item.name for item in self.fashion_system.get_items_by_category(cat)]
-        return summary

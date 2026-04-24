@@ -14,11 +14,12 @@ class PreviewContext(Enum):
     PVP = "PvP"
 
 class WardrobeMenu:
-    def __init__(self, armory_system, fashion_system, weapon_system, ui_feedback):
+    def __init__(self, armory_system, fashion_system, weapon_system, ui_feedback, daily_mission_manager=None):
         self.armory = armory_system
         self.fashion = fashion_system
         self.weapon = weapon_system
         self.ui = ui_feedback
+        self.daily_mission_manager = daily_mission_manager
         self.preview_context = PreviewContext.PVE
 
     def show_menu(self):
@@ -139,6 +140,8 @@ class WardrobeMenu:
                 item = owned_items[choice_num - 1]
                 if self.fashion.equip_item(item.name):
                     self.ui.display_message(f"Equipped {item.name}.")
+                    if self.daily_mission_manager:
+                        self.daily_mission_manager.on_fashion_equipped()
                 else:
                     self.ui.display_message("Failed to equip.")
             elif choice_num == len(owned_items) + 1:
@@ -190,6 +193,21 @@ class WardrobeMenu:
         fashion_summary = self.fashion.get_equipped_summary()
         self.ui.display_message(f"Fashion: {fashion_summary}")
         fashion_bonuses = self.fashion.get_synergy_bonuses()
-        self.ui.display_message(f"Fashion Synergy: {fashion_bonuses}")
-        # Note: Weapon skins would need current weapon context
+        self.ui.display_message(f"Fashion Synergy (visual only): {fashion_bonuses}")
+        self.ui.display_message(f"Preview Context: {self.preview_context.value}")
+        self.ui.display_message(f"PvP Legal Fashion: {'Yes' if self._fashion_is_pvp_legal() else 'No'}")
+        self.ui.display_message(f"PvP Legal Weapon Skins: {'Yes' if self._weapon_skins_are_pvp_legal() else 'No'}")
         self.ui.display_message("Weapon Skins: Check individual weapons")
+
+    def _fashion_is_pvp_legal(self) -> bool:
+        for category, item_name in self.fashion.equipped.items():
+            item = self.fashion.owned_items.get(item_name)
+            if item and not item.allowed_in_pvp:
+                return False
+        return True
+
+    def _weapon_skins_are_pvp_legal(self) -> bool:
+        for weapon_name, skin_name in self.weapon.equipped_skins.items():
+            if not self.weapon.is_skin_pvp_legal(weapon_name, skin_name):
+                return False
+        return True

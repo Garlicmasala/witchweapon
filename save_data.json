@@ -80,5 +80,245 @@
             "Event Banner": 0,
             "Step-Up Banner": 0
         }
+    },
+    "appearance": {
+        "armory": {
+            "owned": {
+                "Leather Cap": {
+                    "name": "Leather Cap",
+                    "slot": "HELMET",
+                    "rarity": "R",
+                    "pve_stats": {
+                        "DEF": 5,
+                        "HP": 10
+                    },
+                    "pvp_stats": {
+                        "DEF": 3,
+                        "HP": 5
+                    },
+                    "description": "Basic leather head protection."
+                },
+                "Cloth Tunic": {
+                    "name": "Cloth Tunic",
+                    "slot": "CHEST",
+                    "rarity": "R",
+                    "pve_stats": {
+                        "DEF": 8,
+                        "HP": 15
+                    },
+                    "pvp_stats": {
+                        "DEF": 5,
+                        "HP": 8
+                    },
+                    "description": "Simple cloth armor for the torso."
+                },
+                "Leather Gloves": {
+                    "name": "Leather Gloves",
+                    "slot": "GLOVES",
+                    "rarity": "R",
+                    "pve_stats": {
+                        "ATK": 3,
+                        "DEF": 2
+                    },
+                    "pvp_stats": {
+                        "ATK": 2,
+                        "DEF": 1
+                    },
+                    "description": "Basic hand protection."
+                },
+                "Boots": {
+                    "name": "Boots",
+                    "slot": "BOOTS",
+                    "rarity": "R",
+                    "pve_stats": {
+                        "DEF": 4,
+                        "HP": 8
+                    },
+                    "pvp_stats": {
+                        "DEF": 2,
+                        "HP": 4
+                    },
+                    "description": "Sturdy footwear."
+                },
+                "Ring": {
+                    "name": "Ring",
+                    "slot": "ACCESSORY",
+                    "rarity": "R",
+                    "pve_stats": {
+                        "ATK": 2,
+                        "DEF": 2
+                    },
+                    "pvp_stats": {
+                        "ATK": 1,
+                        "DEF": 1
+                    },
+                    "description": "A simple accessory."
+                }
+            },
+            "equipped": {
+                "HELMET": "Leather Cap",
+                "CHEST": "Cloth Tunic",
+                "GLOVES": "Leather Gloves",
+                "BOOTS": "Boots",
+                "ACCESSORY": "Ring"
+            }
+        },
+        "fashion": {
+            "owned": {
+                "Witch's Robe": {
+                    "name": "Witch's Robe",
+                    "category": "OUTFIT",
+                    "rarity": "R",
+                    "synergy_bonuses": {
+                        "synergy_def": 5
+                    },
+                    "description": "Classic witch attire.",
+                    "visual_overrides": {
+                        "robe_color": "black",
+                        "robe_style": "flowing"
+                    },
+                    "allowed_in_pvp": true
+                },
+                "Crystal Pendant": {
+                    "name": "Crystal Pendant",
+                    "category": "ACCESSORY",
+                    "rarity": "R",
+                    "synergy_bonuses": {
+                        "synergy_atk": 3
+                    },
+                    "description": "A glowing crystal accessory.",
+                    "visual_overrides": {
+                        "pendant_glow": "blue"
+                    },
+                    "allowed_in_pvp": true
+                },
+                "Sparkle Effect": {
+                    "name": "Sparkle Effect",
+                    "category": "EFFECT",
+                    "rarity": "R",
+                    "synergy_bonuses": {
+                        "synergy_hp": 10
+                    },
+                    "description": "Magical sparkles around the character.",
+                    "visual_overrides": {
+                        "particle_effect": "sparkles"
+                    },
+                    "allowed_in_pvp": true
+                }
+            },
+            "equipped": {
+                "OUTFIT": "Witch's Robe",
+                "ACCESSORY": "Crystal Pendant",
+                "EFFECT": "Sparkle Effect"
+            }
+        },
+        "weapons": {
+            "skins": {
+                "Sword": {
+                    "Iron Blade": {
+                        "name": "Iron Blade",
+                        "skin_type": "SKIN",
+                        "rarity": "R",
+                        "bonuses": {
+                            "ATK": 2
+                        },
+                        "description": "Basic iron appearance.",
+                        "visual_changes": {
+                            "blade_color": "gray",
+                            "hilt_color": "brown"
+                        },
+                        "allowed_in_pvp": true
+                    }
+                }
+            },
+            "equipped": {
+                "Sword": "Iron Blade"
+            }
+        },
+        "preview_context": "PVE"
+    },
+    "visual_novel": {
+        "flags": {},
+        "current_node_id": null,
+        "pending_nodes": [],
+        "archive": [],
+        "patch_version": "1.0.0",
+        "version_history": [
+            "1.0.0"
+        ]
+    },
+    "daily_missions": {
+        "last_reset_date": "2026-04-24",
+        "completion_bonus_claimed": false,
+        "missions": [
+            {
+                "id": "pve_use_skills",
+                "category": "pve_combat",
+                "title": "Use Weapon Skills",
+                "description": "Use weapon skills 5 times",
+                "target": 5,
+                "progress": 0,
+                "completed": false,
+                "claimed": false,
+                "reward": {
+                    "currency": "Gacha Gem",
+                    "amount": 20,
+                    "item": null,
+                    "item_amount": 0
+                },
+                "optional": false
+            },
+            {
+                "id": "weapon_ultimate",
+                "category": "weapon_usage",
+                "title": "Ultimate Power",
+                "description": "Trigger weapon ultimate once",
+                "target": 1,
+                "progress": 0,
+                "completed": false,
+                "claimed": false,
+                "reward": {
+                    "currency": "Weapon Affinity",
+                    "amount": 20,
+                    "item": null,
+                    "item_amount": 0
+                },
+                "optional": false
+            },
+            {
+                "id": "weapon_specific",
+                "category": "weapon_usage",
+                "title": "Bond with Weapon",
+                "description": "Complete a mission with a specific weapon",
+                "target": 1,
+                "progress": 0,
+                "completed": false,
+                "claimed": false,
+                "reward": {
+                    "currency": "Weapon Affinity",
+                    "amount": 15,
+                    "item": null,
+                    "item_amount": 0
+                },
+                "optional": false
+            },
+            {
+                "id": "fashion_equip",
+                "category": "social_fashion",
+                "title": "Style Check",
+                "description": "Equip any outfit",
+                "target": 1,
+                "progress": 0,
+                "completed": false,
+                "claimed": false,
+                "reward": {
+                    "currency": "Fashion Token",
+                    "amount": 5,
+                    "item": null,
+                    "item_amount": 0
+                },
+                "optional": false
+            }
+        ]
     }
 }

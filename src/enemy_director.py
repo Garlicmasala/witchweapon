@@ -19,8 +19,9 @@ class EnemyMobility(Enum):
 class EnemyDirector:
     """Controls enemy activation, spawning, and area-based engagement."""
     
-    def __init__(self, ui_feedback):
+    def __init__(self, ui_feedback, visual_novel_manager=None):
         self.ui = ui_feedback
+        self.visual_novel_manager = visual_novel_manager
         self.enemies: List[Enemy] = []
         self.cell_assignments = {}  # CombatCell -> List[Enemy]
         self.active_cell = None
@@ -68,3 +69,5 @@ class EnemyDirector:
                 enemy.state = "defeated"
             cell.clear()
             self.ui.display_message(f"[EnemyDirector] Cell {cell.cell_id} cleared.")
+            if cell.story_node_id and self.visual_novel_manager:
+                self.visual_novel_manager.queue_story_node(cell.story_node_id)

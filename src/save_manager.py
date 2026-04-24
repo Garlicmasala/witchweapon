@@ -10,7 +10,7 @@ class SaveManager:
     def __init__(self, save_file="save_data.json"):
         self.save_file = save_file
 
-    def save_game(self, player, weapon_manager, upgrade_manager, currency_manager=None, gacha_manager=None, appearance_manager=None):
+    def save_game(self, player, weapon_manager, upgrade_manager, currency_manager=None, gacha_manager=None, appearance_manager=None, visual_novel_manager=None, daily_mission_manager=None):
         # US: Data persistence - save/load to JSON
         data = {
             "player": {
@@ -35,7 +35,9 @@ class SaveManager:
             "breakthrough_level": upgrade_manager.breakthrough_level,
             "currency": currency_manager.get_balances() if currency_manager else {},
             "gacha": gacha_manager.get_state() if gacha_manager else {},
-            "appearance": appearance_manager.to_dict() if appearance_manager else {}
+            "appearance": appearance_manager.to_dict() if appearance_manager else {},
+            "visual_novel": visual_novel_manager.get_state() if visual_novel_manager else {},
+            "daily_missions": daily_mission_manager.save_state() if daily_mission_manager else None
         }
         for name, weapon in weapon_manager.weapons.items():
             data["weapons"][name] = {
@@ -56,7 +58,7 @@ class SaveManager:
             json.dump(data, f, indent=4)
         print("Game saved.")
 
-    def load_game(self, player, weapon_manager, upgrade_manager, currency_manager=None, gacha_manager=None, appearance_manager=None):
+    def load_game(self, player, weapon_manager, upgrade_manager, currency_manager=None, gacha_manager=None, appearance_manager=None, visual_novel_manager=None, daily_mission_manager=None):
         # US: Data persistence - save/load to JSON
         if not os.path.exists(self.save_file):
             print("No save file found.")
@@ -109,5 +111,10 @@ class SaveManager:
         # Load appearance
         if appearance_manager and "appearance" in data:
             appearance_manager.load_from_dict(data["appearance"])
+        if visual_novel_manager and "visual_novel" in data:
+            visual_novel_manager.load_state(data["visual_novel"])
+        # Load daily missions
+        if daily_mission_manager and "daily_missions" in data and data["daily_missions"]:
+            daily_mission_manager.load_state_from_dict(data["daily_missions"])
         print("Game loaded.")
         return True

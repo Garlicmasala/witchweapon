@@ -43,14 +43,16 @@ class Player:
     def atk(self):
         # US: Character level progression - stat scaling
         weapon_bonus = self.current_weapon.atk_bonus if self.current_weapon else 0
-        appearance_bonus = self.appearance_manager.get_total_bonus("ATK") if self.appearance_manager else 0
+        appearance_mods = self.appearance_manager.get_combat_modifiers("PvE") if self.appearance_manager else {}
+        appearance_bonus = appearance_mods.get("ATK", 0)
         return self.base_atk + (self.level - 1) * 2 + self.enhanced_atk + weapon_bonus + appearance_bonus
 
     @property
     def defense(self):
         # US: Character level progression - stat scaling
         weapon_bonus = self.current_weapon.def_bonus if self.current_weapon else 0
-        appearance_bonus = self.appearance_manager.get_total_bonus("DEF") if self.appearance_manager else 0
+        appearance_mods = self.appearance_manager.get_combat_modifiers("PvE") if self.appearance_manager else {}
+        appearance_bonus = appearance_mods.get("DEF", 0)
         return self.base_def + (self.level - 1) * 1 + self.enhanced_def + weapon_bonus + appearance_bonus
 
     def calculate_max_health(self):

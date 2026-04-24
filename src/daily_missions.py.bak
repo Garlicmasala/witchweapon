@@ -1,0 +1,373 @@
+"""
+Daily Missions System for Witch's Weapon.
+Handles daily mission generation, progress tracking, and rewards.
+"""
+
+import json
+import os
+from dataclasses import dataclass, asdict
+from datetime import datetime, time
+from typing import Dict, List, Optional, Any
+from enum import Enum
+
+class MissionCategory(Enum):
+    PVE_COMBAT = "pve_combat"
+    PVP_PARTICIPATION = "pvp_participation"
+    WEAPON_USAGE = "weapon_usage"
+    VISUAL_NOVEL = "visual_novel"
+    SOCIAL_FASHION = "social_fashion"
+
+@dataclass
+class MissionReward:
+    currency: Optional[str] = None
+    amount: int = 0
+    item: Optional[str] = None
+    item_amount: int = 0
+
+@dataclass
+class DailyMission:
+    id: str
+    category: MissionCategory
+    title: str
+    description: str
+    target: int
+    reward: MissionReward
+    optional: bool = False
+    progress: int = 0
+    completed: bool = False
+    claimed: bool = False
+
+class DailyMissionManager:
+    def __init__(self, currency_manager, save_file="daily_missions.json"):
+        self.currency_manager = currency_manager
+        self.save_file = save_file
+        self.missions: List[DailyMission] = []
+        self.last_reset_date = None
+        self.completion_bonus_claimed = False
+        self.mission_pool = self._load_mission_pool()
+        self._check_daily_reset()
+
+    def _load_mission_pool(self) -> List[Dict[str, Any]]:
+        """Load mission pool from JSON file or use defaults."""
+        pool_file = "src/daily_mission_pool.json"
+        if os.path.exists(pool_file):
+            with open(pool_file, 'r') as f:
+                return json.load(f)
+        else:
+            return self._get_default_mission_pool()
+
+    def _get_default_mission_pool(self) -> List[Dict[str, Any]]:
+        """Default mission pool for development."""
+        return [
+            # PvE Combat
+            {
+                "id": "pve_clear_stages",
+                "category": "pve_combat",
+                "title": "Clear Combat Stages",
+                "description": "Clear 3 combat stages",
+                "target": 3,
+                "reward": {"currency": "Gacha Gem", "amount": 50},
+                "optional": False
+            },
+            {
+                "id": "pve_defeat_enemies",
+                "category": "pve_combat",
+                "title": "Defeat Enemies",
+                "description": "Defeat 10 enemies",
+                "target": 10,
+                "reward": {"currency": "Gacha Gem", "amount": 30},
+                "optional": False
+            },
+            {
+                "id": "pve_no_death",
+                "category": "pve_combat",
+                "title": "Perfect Clear",
+                "description": "Clear a stage without dying",
+                "target": 1,
+                "reward": {"currency": "Weapon Affinity", "amount": 10},
+                "optional": False
+            },
+            {
+                "id": "pve_use_skills",
+                "category": "pve_combat",
+                "title": "Use Weapon Skills",
+                "description": "Use weapon skills 5 times",
+                "target": 5,
+                "reward": {"currency": "Gacha Gem", "amount": 20},
+                "optional": False
+            },
+            # Weapon Usage
+            {
+                "id": "weapon_specific",
+                "category": "weapon_usage",
+                "title": "Bond with Weapon",
+                "description": "Complete a mission with a specific weapon",
+                "target": 1,
+                "reward": {"currency": "Weapon Affinity", "amount": 15},
+                "optional": False
+            },
+            {
+                "id": "weapon_ultimate",
+                "category": "weapon_usage",
+                "title": "Ultimate Power",
+                "description": "Trigger weapon ultimate once",
+                "target": 1,
+                "reward": {"currency": "Weapon Affinity", "amount": 20},
+                "optional": False
+            },
+            {
+                "id": "weapon_switch",
+                "category": "weapon_usage",
+                "title": "Weapon Mastery",
+                "description": "Switch weapons 3 times in combat",
+                "target": 3,
+                "reward": {"currency": "Gacha Gem", "amount": 25},
+                "optional": False
+            },
+            # Visual Novel
+            {
+                "id": "vn_read_node",
+                "category": "visual_novel",
+                "title": "Story Time",
+                "description": "Read 1 VN node",
+                "target": 1,
+                "reward": {"currency": "Fashion Token", "amount": 5},
+                "optional": False
+            },
+            {
+                "id": "vn_replay_scene",
+                "category": "visual_novel",
+                "title": "Relive Memories",
+                "description": "Replay a previous scene",
+                "target": 1,
+                "reward": {"currency": "Fashion Token", "amount": 10},
+                "optional": False
+            },
+            # PvP (optional)
+            {
+                "id": "pvp_play_match",
+                "category": "pvp_participation",
+                "title": "PvP Challenge",
+                "description": "Play 1 PvP match",
+                "target": 1,
+                "reward": {"currency": "Gacha Gem", "amount": 40},
+                "optional": True
+            },
+            {
+                "id": "pvp_use_skills",
+                "category": "pvp_participation",
+                "title": "PvP Skills",
+                "description": "Use skills 3 times in PvP",
+                "target": 3,
+                "reward": {"currency": "Gacha Gem", "amount": 35},
+                "optional": True
+            },
+            # Social/Fashion
+            {
+                "id": "fashion_equip",
+                "category": "social_fashion",
+                "title": "Style Check",
+                "description": "Equip any outfit",
+                "target": 1,
+                "reward": {"currency": "Fashion Token", "amount": 5},
+                "optional": False
+            }
+        ]
+
+    def _check_daily_reset(self):
+        """Check if it's a new day and reset missions if needed."""
+        today = datetime.now().date()
+        if self.last_reset_date != today:
+            self._reset_daily_missions()
+            self.last_reset_date = today
+            self.completion_bonus_claimed = False
+
+    def _reset_daily_missions(self):
+        """Generate new daily missions."""
+        import random
+        random.seed(datetime.now().date().toordinal())  # Consistent per day
+
+        # Select 3-5 missions with category balance
+        selected = []
+        categories = [MissionCategory.PVE_COMBAT, MissionCategory.WEAPON_USAGE, MissionCategory.VISUAL_NOVEL]
+        optional_categories = [MissionCategory.PVP_PARTICIPATION, MissionCategory.SOCIAL_FASHION]
+
+        # Always include at least 1 PvE
+        pve_pool = [m for m in self.mission_pool if m["category"] == "pve_combat"]
+        selected.append(random.choice(pve_pool))
+
+        # Add more from main categories
+        main_pool = [m for m in self.mission_pool if m["category"] in ["weapon_usage", "visual_novel"]]
+        selected.extend(random.sample(main_pool, min(2, len(main_pool))))
+
+        # Add optional PvP or fashion
+        optional_pool = [m for m in self.mission_pool if m["category"] in ["pvp_participation", "social_fashion"]]
+        if optional_pool:
+            selected.append(random.choice(optional_pool))
+
+        # Convert to DailyMission objects
+        self.missions = []
+        for m_data in selected[:5]:  # Max 5
+            reward = MissionReward(**m_data["reward"])
+            mission = DailyMission(
+                id=m_data["id"],
+                category=MissionCategory(m_data["category"]),
+                title=m_data["title"],
+                description=m_data["description"],
+                target=m_data["target"],
+                reward=reward,
+                optional=m_data.get("optional", False)
+            )
+            self.missions.append(mission)
+
+    def get_daily_missions(self) -> List[DailyMission]:
+        """Get current daily missions."""
+        self._check_daily_reset()
+        return self.missions
+
+    def update_progress(self, mission_id: str, amount: int = 1):
+        """Update progress for a mission."""
+        for mission in self.missions:
+            if mission.id == mission_id and not mission.completed:
+                mission.progress = min(mission.progress + amount, mission.target)
+                if mission.progress >= mission.target:
+                    mission.completed = True
+                break
+
+    # Event hooks for progress tracking
+    def on_combat_stage_cleared(self):
+        """Called when a PvE combat stage is cleared."""
+        self.update_progress("pve_clear_stages")
+        self.update_progress("pve_no_death")  # Assuming no death for now
+
+    def on_enemy_defeated(self):
+        """Called when an enemy is defeated."""
+        self.update_progress("pve_defeat_enemies")
+
+    def on_weapon_skill_used(self):
+        """Called when a weapon skill is used."""
+        self.update_progress("pve_use_skills")
+
+    def on_weapon_switched(self):
+        """Called when weapon is switched in combat."""
+        self.update_progress("weapon_switch")
+
+    def on_weapon_ultimate_used(self):
+        """Called when weapon ultimate is triggered."""
+        self.update_progress("weapon_ultimate")
+
+    def on_specific_weapon_used(self, weapon_name: str):
+        """Called when completing mission with specific weapon."""
+        # For simplicity, assume any weapon counts for now
+        self.update_progress("weapon_specific")
+
+    def on_vn_node_read(self):
+        """Called when a VN node is read."""
+        self.update_progress("vn_read_node")
+
+    def on_vn_scene_replayed(self):
+        """Called when a VN scene is replayed."""
+        self.update_progress("vn_replay_scene")
+
+    def on_pvp_match_played(self):
+        """Called when a PvP match is played."""
+        self.update_progress("pvp_play_match")
+
+    def on_pvp_skill_used(self):
+        """Called when a skill is used in PvP."""
+        self.update_progress("pvp_use_skills")
+
+    def on_fashion_equipped(self):
+        """Called when fashion is equipped."""
+        self.update_progress("fashion_equip")
+
+    def claim_reward(self, mission_id: str) -> bool:
+        """Claim reward for a completed mission."""
+        for mission in self.missions:
+            if mission.id == mission_id and mission.completed and not mission.claimed:
+                if mission.reward.currency:
+                    self.currency_manager.add(mission.reward.currency, mission.reward.amount)
+                # Handle items if needed
+                mission.claimed = True
+                return True
+        return False
+
+    def claim_completion_bonus(self) -> bool:
+        """Claim bonus for completing all missions."""
+        if self.completion_bonus_claimed:
+            return False
+        all_completed = all(m.completed for m in self.missions if not m.optional)
+        if all_completed:
+            # Bonus reward: e.g., extra gems
+            self.currency_manager.add("Gacha Gem", 100)
+            self.completion_bonus_claimed = True
+            return True
+        return False
+
+    def get_completion_status(self) -> Dict[str, Any]:
+        """Get completion status for UI."""
+        completed_count = sum(1 for m in self.missions if m.completed)
+        total_required = sum(1 for m in self.missions if not m.optional)
+        all_completed = completed_count >= total_required
+        return {
+            "missions": self.missions,
+            "completed_count": completed_count,
+            "total_count": len(self.missions),
+            "all_completed": all_completed,
+            "bonus_claimed": self.completion_bonus_claimed
+        }
+
+    def save_state(self):
+        """Save daily mission state."""
+        data = {
+            "last_reset_date": self.last_reset_date.isoformat() if self.last_reset_date else None,
+            "completion_bonus_claimed": self.completion_bonus_claimed,
+            "missions": [{
+                "id": m.id,
+                "category": m.category.value,
+                "title": m.title,
+                "description": m.description,
+                "target": m.target,
+                "progress": m.progress,
+                "completed": m.completed,
+                "claimed": m.claimed,
+                "reward": {
+                    "currency": m.reward.currency,
+                    "amount": m.reward.amount,
+                    "item": m.reward.item,
+                    "item_amount": m.reward.item_amount
+                }
+                    "currency": m.reward.currency,
+                    "amount": m.reward.amount,
+                    "item": m.reward.item,
+                    "item_amount": m.reward.item_amount
+                },
+                "optional": m.optional
+            } for m in se]
+        for m_data in data["missions"]:
+            reward = MissionReward(**m_data["reward"])
+            mission = DailyMission(
+                id=m_data["id"],
+                category=MissionCategory(m_data["category"]),
+                title=m_data["title"],
+                description=m_data["description"],
+                target=m_data["target"],
+                progress=m_data["progress"],
+                completed=m_data["completed"],
+                claimed=m_data["claimed"],
+                reward=reward,
+                optional=m_data["optional"]
+            )
+            self.missions.append(mission)
+        }
+        with open(self.save_file, 'w') as f:
+            json.dump(data, f, indent=4)
+        return data
+
+    def load_state_from_dict(self, data: Dict[str, Any]):
+        """Load daily mission state from dict."""
+        from datetime import datetime
+        self.last_reset_date = datetime.fromisoformat(data["last_reset_date"]) if data["last_reset_date"] else None
+        self.completion_bonus_claimed = data["completion_bonus_claimed"]
+        self.missions = [DailyMission(**m) for m in data["missions"]]
+        self._check_daily_reset()  # Ensure up to date

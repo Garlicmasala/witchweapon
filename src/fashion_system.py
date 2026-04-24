@@ -13,13 +13,14 @@ class FashionCategory(Enum):
     EFFECT = "Effect"
 
 class FashionItem:
-    def __init__(self, name: str, category: FashionCategory, rarity: Rarity, synergy_bonuses: Dict[str, float], description: str = "", visual_overrides: Dict[str, str] = None):
+    def __init__(self, name: str, category: FashionCategory, rarity: Rarity, synergy_bonuses: Dict[str, float], description: str = "", visual_overrides: Dict[str, str] = None, allowed_in_pvp: bool = True):
         self.name = name
         self.category = category
         self.rarity = rarity
         self.synergy_bonuses = synergy_bonuses.copy()
         self.description = description
         self.visual_overrides = visual_overrides or {}
+        self.allowed_in_pvp = allowed_in_pvp
 
     def to_dict(self):
         return {
@@ -28,7 +29,8 @@ class FashionItem:
             "rarity": self.rarity.name,
             "synergy_bonuses": self.synergy_bonuses,
             "description": self.description,
-            "visual_overrides": self.visual_overrides
+            "visual_overrides": self.visual_overrides,
+            "allowed_in_pvp": self.allowed_in_pvp
         }
 
     @classmethod
@@ -39,7 +41,8 @@ class FashionItem:
             Rarity[data["rarity"]],
             data["synergy_bonuses"],
             data.get("description", ""),
-            data.get("visual_overrides", {})
+            data.get("visual_overrides", {}),
+            data.get("allowed_in_pvp", True)
         )
 
 class FashionSystem:
@@ -111,12 +114,23 @@ class FashionSystem:
                     total[bonus] = total.get(bonus, 0) + value
         return total
 
-    def get_visual_overrides(self) -> Dict[str, str]:
+    def get_visual_overrides(self, context: str = "PvE") -> Dict[str, str]:
         overrides = {}
         for item in self.owned_items.values():
             if self.equipped.get(item.category) == item.name:
+                if context == "PvP" and not item.allowed_in_pvp:
+                    continue
                 overrides.update(item.visual_overrides)
         return overrides
+
+    def get_items_by_category(self, category: FashionCategory) -> List[FashionItem]:
+        return [item for item in self.owned_items.values() if item.category == category]
+
+    def is_pvp_legal(self) -> bool:
+        for item in self.owned_items.values():
+            if self.equipped.get(item.category) == item.name and not item.allowed_in_pvp:
+                return False
+        return True
 
     def get_fashion_state(self) -> Dict:
         return {

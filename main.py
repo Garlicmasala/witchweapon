@@ -25,6 +25,8 @@ from src.enemy_director import EnemyDirector, EnemyMobility
 from src.world_state_controller import WorldStateController
 from src.pvp_matchmaking import PvPMatchmaker
 from src.pvp_menu import PvPMenu
+from src.visual_novel import VisualNovelManager
+from src.daily_missions import DailyMissionManager
 import time
 import random
 
@@ -32,7 +34,7 @@ def main():
     # Initialize components
     ui = UIFeedback()
     weapon_manager = WeaponManager()
-    appearance_manager = AppearanceManager(ui)
+    appearance_manager = AppearanceManager(ui)  # Temp, will update later
     skill_system = SkillSystem()
     upgrade_manager = UpgradeManager(ui)
     currency_manager = CurrencyManager()
@@ -47,18 +49,28 @@ def main():
     companions = [companion]
 
     traversal_system = TraversalSystem(ui)
-    enemy_director = EnemyDirector(ui)
+    visual_novel_manager = VisualNovelManager(ui)
+    visual_novel_manager.load_story_graph(VisualNovelManager.create_default_story_graph())
+    daily_mission_manager = DailyMissionManager(currency_manager)
+    enemy_director = EnemyDirector(ui, visual_novel_manager)
     world_map = WorldMapRoot(ui)
-    world_state = WorldStateController(ui, world_map, enemy_director)
+    world_state = WorldStateController(ui, world_map, enemy_director, visual_novel_manager)
     
     # Initialize PvP
     pvp_matchmaker = PvPMatchmaker()
-    pvp_menu = PvPMenu(ui, player, pvp_matchmaker)
+    pvp_menu = PvPMenu(ui, player, pvp_matchmaker, daily_mission_manager)
+    setup_example_map(world_map, traversal_system, enemy_director, ui)
 
+    # Now update appearance_manager with daily_mission_manager
+    appearance_manager = AppearanceManager(ui, daily_mission_manager)
+    # Update gacha_manager and player with appearance_manager
+    gacha_manager.appearance_manager = appearance_manager
+    player.appearance_manager = appearance_manager
+    visual_novel_manager.daily_mission_manager = daily_mission_manager
     setup_example_map(world_map, traversal_system, enemy_director, ui)
 
     # Try to load save
-    save_manager.load_game(player, weapon_manager, upgrade_manager, currency_manager, gacha_manager, appearance_manager)
+    save_manager.load_game(player, weapon_manager, upgrade_manager, currency_manager, gacha_manager, appearance_manager, visual_novel_manager, daily_mission_manager)
 
     ui.display_message("Welcome to Witch's Weapon Combat Simulation!")
 
@@ -66,15 +78,26 @@ def main():
         print("\n--- Main Menu ---")
         print("1. Start Combat")
         print("2. Upgrade")
-        print("3. PvP Arena")
-        print("8. Save")
-        print("9. Quit")
+        print("3. Gacha")
+        print("4. Interact")
+        print("5. Armory & Wardrobe")
+        print("6. World Map")
+        print("7. PvP Arena")
+        print("8. Daily Missions")
+        print("9. Save")
+        print("10. Quit")
         choice = input("Choose: ").strip()
         if choice == "1":
             enemy = Enemy("Goblin", 100, ui)
             combat_manager = CombatManager(player, enemy, ui, upgrade_manager)
             ui.display_message("Enemy: Goblin with 100 HP.")
-            run_combat(player, enemy, combat_manager, ui, companions, dialogue_manager)
+            run_combat(player, enemy, combat_manager, ui, companions, dialogue_manager, daily_mission_manager)
+            # Update daily missions
+            if enemy.is_defeated():
+                daily_mission_manager.on_combat_stage_cleared()
+                daily_mission_manager.on_enemy_defeated()
+            if visual_novel_manager.has_pending_story():
+                visual_novel_manager.play_next_interlude()
         elif choice == "2":
             show_upgrade_menu(player, upgrade_manager, ui)
         elif choice == "3":
@@ -88,13 +111,11 @@ def main():
         elif choice == "7":
             show_pvp_menu(pvp_menu, player)
         elif choice == "8":
-            save_manager.save_game(player, weapon_manager, upgrade_manager, currency_manager, gacha_manager, appearance_manager)
+            show_daily_missions_menu(daily_mission_manager, ui)
         elif choice == "9":
-            show_world_map_menu(player, world_map, traversal_system, world_state, ui)
-        elif choice == "7":
-            save_manager.save_game(player, weapon_manager, upgrade_manager, currency_manager, gacha_manager, appearance_manager)
-        elif choice == "8":
-            save_manager.save_game(player, weapon_manager, upgrade_manager, currency_manager, gacha_manager, appearance_manager)
+            save_manager.save_game(player, weapon_manager, upgrade_manager, currency_manager, gacha_manager, appearance_manager, visual_novel_manager, daily_mission_manager)
+        elif choice == "10":
+            save_manager.save_game(player, weapon_manager, upgrade_manager, currency_manager, gacha_manager, appearance_manager, visual_novel_manager, daily_mission_manager)
             break
         else:
             ui.display_message("Invalid choice.")
@@ -110,7 +131,8 @@ def setup_example_map(world_map, traversal_system, enemy_director, ui):
         "cell_1",
         ((-5.0, 0.0, -5.0), (5.0, 12.0, 5.0)),
         [HeightTier.GROUND, HeightTier.ELEVATED, HeightTier.AIR],
-        [(-2.0, 0.0, -2.0), (2.0, 5.0, 2.0)]
+        [(-2.0, 0.0, -2.0), (2.0, 5.0, 2.0)],
+        story_node_id="interlude_1"
     )
     chunk.add_combat_cell(cell)
 
@@ -129,7 +151,7 @@ def setup_example_map(world_map, traversal_system, enemy_director, ui):
     ui.display_message("[WorldMap] Example map setup completed.")
 
 
-def run_combat(player, enemy, combat_manager, ui, companions, dialogue_manager):
+def run_combat(player, enemy, combat_manager, ui, companions, dialogue_manager, daily_mission_manager):
     # Simulation loop
     while not combat_manager.is_battle_over():
         ui.display_status(player, enemy)
@@ -146,12 +168,15 @@ def run_combat(player, enemy, combat_manager, ui, companions, dialogue_manager):
             combat_manager.auto_attack()
         elif action == "switch_weapon":
             weapon_name = input("Weapon to switch to: ").strip()
-            player.switch_weapon(weapon_name)
+            if player.switch_weapon(weapon_name):
+                daily_mission_manager.on_weapon_switched()
         elif action == "use_skill":
             skill_name = input("Skill to use: ").strip()
-            player.use_skill(skill_name, enemy)
+            if player.use_skill(skill_name, enemy):
+                daily_mission_manager.on_weapon_skill_used()
         elif action == "ultimate":
-            player.use_ultimate(enemy)
+            if player.use_ultimate(enemy):
+                daily_mission_manager.on_weapon_ultimate_used()
         elif action == "interact":
             if companions:
                 player.interact(companions[0])  # Interact with first companion
@@ -436,6 +461,8 @@ def show_companion_movement_menu(companions, player, ui):
                     parts = command.split()
                     if len(parts) > 1:
                         comp.move(parts[1])
+        except ValueError:
+            ui.display_message("Invalid choice.")
 
 def show_pvp_menu(pvp_menu, player):
     """PvP Arena menu with Free Mode and Practice options."""
@@ -449,12 +476,56 @@ def show_pvp_menu(pvp_menu, player):
         elif next_menu != "main":
             pvp_menu.current_menu = next_menu
 
-
-            elif choice_num == len(companions) + 1:
-                break
+def show_daily_missions_menu(daily_mission_manager, ui):
+    """Daily Missions overview and management menu."""
+    while True:
+        status = daily_mission_manager.get_completion_status()
+        missions = status["missions"]
+        
+        print("\n--- Daily Missions ---")
+        print(f"Completed: {status['completed_count']}/{status['total_count']}")
+        if status["all_completed"] and not status["bonus_claimed"]:
+            print("🎉 All missions completed! Bonus available.")
+        elif status["bonus_claimed"]:
+            print("✅ Bonus claimed!")
+        
+        for i, mission in enumerate(missions, 1):
+            status_icon = "✅" if mission.completed else "⏳"
+            claim_icon = "💰" if mission.completed and not mission.claimed else ""
+            optional_icon = "(Optional)" if mission.optional else ""
+            progress = f"{mission.progress}/{mission.target}"
+            print(f"{i}. {status_icon} {mission.title} {optional_icon}")
+            print(f"   {mission.description} - Progress: {progress} {claim_icon}")
+            if mission.reward.currency:
+                print(f"   Reward: {mission.reward.amount} {mission.reward.currency}")
+        
+        print("\nOptions:")
+        print("1-5. Claim reward for mission")
+        print("6. Claim completion bonus")
+        print("7. Back to main menu")
+        
+        choice = input("Choose: ").strip()
+        if choice in ["1", "2", "3", "4", "5"]:
+            idx = int(choice) - 1
+            if idx < len(missions):
+                mission = missions[idx]
+                if mission.completed and not mission.claimed:
+                    if daily_mission_manager.claim_reward(mission.id):
+                        ui.display_message(f"Claimed reward: {mission.reward.amount} {mission.reward.currency}")
+                    else:
+                        ui.display_message("Failed to claim reward.")
+                else:
+                    ui.display_message("Mission not completed or already claimed.")
             else:
-                ui.display_message("Invalid choice.")
-        except ValueError:
+                ui.display_message("Invalid mission number.")
+        elif choice == "6":
+            if daily_mission_manager.claim_completion_bonus():
+                ui.display_message("Claimed completion bonus: 100 Gacha Gems!")
+            else:
+                ui.display_message("Bonus not available.")
+        elif choice == "7":
+            break
+        else:
             ui.display_message("Invalid choice.")
 
 if __name__ == "__main__":
