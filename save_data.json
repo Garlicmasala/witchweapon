@@ -248,76 +248,76 @@
         ]
     },
     "daily_missions": {
-        "last_reset_date": "2026-04-24",
+        "last_reset_date": "2026-04-25",
         "completion_bonus_claimed": false,
         "missions": [
             {
-                "id": "pve_use_skills",
+                "id": "pve_defeat_enemies",
                 "category": "pve_combat",
-                "title": "Use Weapon Skills",
-                "description": "Use weapon skills 5 times",
-                "target": 5,
+                "title": "Defeat Enemies",
+                "description": "Defeat 10 enemies",
+                "target": 10,
                 "progress": 0,
                 "completed": false,
                 "claimed": false,
                 "reward": {
                     "currency": "Gacha Gem",
-                    "amount": 20,
+                    "amount": 30,
                     "item": null,
                     "item_amount": 0
                 },
                 "optional": false
             },
             {
-                "id": "weapon_ultimate",
-                "category": "weapon_usage",
-                "title": "Ultimate Power",
-                "description": "Trigger weapon ultimate once",
-                "target": 1,
-                "progress": 0,
-                "completed": false,
-                "claimed": false,
-                "reward": {
-                    "currency": "Weapon Affinity",
-                    "amount": 20,
-                    "item": null,
-                    "item_amount": 0
-                },
-                "optional": false
-            },
-            {
-                "id": "weapon_specific",
-                "category": "weapon_usage",
-                "title": "Bond with Weapon",
-                "description": "Complete a mission with a specific weapon",
-                "target": 1,
-                "progress": 0,
-                "completed": false,
-                "claimed": false,
-                "reward": {
-                    "currency": "Weapon Affinity",
-                    "amount": 15,
-                    "item": null,
-                    "item_amount": 0
-                },
-                "optional": false
-            },
-            {
-                "id": "fashion_equip",
-                "category": "social_fashion",
-                "title": "Style Check",
-                "description": "Equip any outfit",
+                "id": "vn_replay_scene",
+                "category": "visual_novel",
+                "title": "Relive Memories",
+                "description": "Replay a previous scene",
                 "target": 1,
                 "progress": 0,
                 "completed": false,
                 "claimed": false,
                 "reward": {
                     "currency": "Fashion Token",
-                    "amount": 5,
+                    "amount": 10,
                     "item": null,
                     "item_amount": 0
                 },
                 "optional": false
+            },
+            {
+                "id": "weapon_switch",
+                "category": "weapon_usage",
+                "title": "Weapon Mastery",
+                "description": "Switch weapons 3 times in combat",
+                "target": 3,
+                "progress": 0,
+                "completed": false,
+                "claimed": false,
+                "reward": {
+                    "currency": "Gacha Gem",
+                    "amount": 25,
+                    "item": null,
+                    "item_amount": 0
+                },
+                "optional": false
+            },
+            {
+                "id": "pvp_use_skills",
+                "category": "pvp_participation",
+                "title": "PvP Skills",
+                "description": "Use skills 3 times in PvP",
+                "target": 3,
+                "progress": 0,
+                "completed": false,
+                "claimed": false,
+                "reward": {
+                    "currency": "Gacha Gem",
+                    "amount": 35,
+                    "item": null,
+                    "item_amount": 0
+                },
+                "optional": true
             }
         ]
     }

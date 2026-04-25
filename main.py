@@ -27,10 +27,22 @@ from src.pvp_matchmaking import PvPMatchmaker
 from src.pvp_menu import PvPMenu
 from src.visual_novel import VisualNovelManager
 from src.daily_missions import DailyMissionManager
+
+# Portability imports
+from src.PORTABILITY_GUIDE import initialize_game_for_platform
+
 import time
 import random
 
 def main():
+    # Initialize portability system (default to web for development)
+    platform_name = "web"  # TODO: Detect actual platform
+    portability = initialize_game_for_platform(platform_name)
+    input_system = portability["input_system"]
+    ui_responsive = portability["ui_responsive"]
+    perf_manager = portability["perf_manager"]
+    cross_platform_save = portability["save_manager"]
+    
     # Initialize components
     ui = UIFeedback()
     weapon_manager = WeaponManager()
@@ -74,7 +86,19 @@ def main():
 
     ui.display_message("Welcome to Witch's Weapon Combat Simulation!")
 
+    # Game loop with portability
+    last_time = time.time()
     while True:
+        current_time = time.time()
+        delta_time = current_time - last_time
+        last_time = current_time
+        # Update portability systems
+        input_system.update(delta_time)
+        perf_manager.record_frame_time(delta_time * 1000)  # Convert to ms
+        perf_manager.auto_adjust_if_needed()
+        cross_platform_save.update_play_time(delta_time)
+        
+        # Update UI responsiveness
         print("\n--- Main Menu ---")
         print("1. Start Combat")
         print("2. Upgrade")
@@ -84,8 +108,9 @@ def main():
         print("6. World Map")
         print("7. PvP Arena")
         print("8. Daily Missions")
-        print("9. Save")
-        print("10. Quit")
+        print("9. Platform Settings")
+        print("10. Save")
+        print("11. Quit")
         choice = input("Choose: ").strip()
         if choice == "1":
             enemy = Enemy("Goblin", 100, ui)
@@ -113,8 +138,10 @@ def main():
         elif choice == "8":
             show_daily_missions_menu(daily_mission_manager, ui)
         elif choice == "9":
-            save_manager.save_game(player, weapon_manager, upgrade_manager, currency_manager, gacha_manager, appearance_manager, visual_novel_manager, daily_mission_manager)
+            show_platform_settings_menu(portability, ui)
         elif choice == "10":
+            save_manager.save_game(player, weapon_manager, upgrade_manager, currency_manager, gacha_manager, appearance_manager, visual_novel_manager, daily_mission_manager)
+        elif choice == "11":
             save_manager.save_game(player, weapon_manager, upgrade_manager, currency_manager, gacha_manager, appearance_manager, visual_novel_manager, daily_mission_manager)
             break
         else:
@@ -524,6 +551,46 @@ def show_daily_missions_menu(daily_mission_manager, ui):
             else:
                 ui.display_message("Bonus not available.")
         elif choice == "7":
+            break
+        else:
+            ui.display_message("Invalid choice.")
+
+def show_platform_settings_menu(portability, ui):
+    """Show platform-specific settings menu."""
+    while True:
+        print("\n--- Platform Settings ---")
+        print(f"1. Performance Tier: {portability['perf_manager'].get_tier().value.upper()}")
+        print(f"2. UI Mode: {portability['ui_responsive'].mode.value.upper()}")
+        print(f"3. Input Assistance: {portability['input_system'].config.target_assistance}")
+        print("4. Back")
+        
+        choice = input("Choose: ").strip()
+        if choice == "1":
+            # Cycle performance tiers
+            current = portability['perf_manager'].get_tier()
+            tiers = [portability['perf_manager'].__class__.PerformanceTier.LOW, 
+                    portability['perf_manager'].__class__.PerformanceTier.MEDIUM,
+                    portability['perf_manager'].__class__.PerformanceTier.HIGH]
+            next_tier = tiers[(tiers.index(current) + 1) % len(tiers)]
+            portability['perf_manager'].set_tier(next_tier)
+            ui.display_message(f"Performance tier changed to {next_tier.value.upper()}")
+        elif choice == "2":
+            # Cycle UI modes
+            current = portability['ui_responsive'].mode
+            modes = [portability['ui_responsive'].__class__.UIMode.POINTER,
+                    portability['ui_responsive'].__class__.UIMode.TOUCH,
+                    portability['ui_responsive'].__class__.UIMode.SELECTION]
+            next_mode = modes[(modes.index(current) + 1) % len(modes)]
+            portability['ui_responsive'].set_ui_mode(next_mode)
+            ui.display_message(f"UI mode changed to {next_mode.value.upper()}")
+        elif choice == "3":
+            # Cycle input assistance
+            current = portability['input_system'].config.target_assistance
+            levels = ["NONE", "LIGHT", "STRONG"]
+            next_level = levels[(levels.index(current) + 1) % len(levels)]
+            portability['input_system'].config.target_assistance = next_level
+            ui.display_message(f"Input assistance changed to {next_level}")
+        elif choice == "4":
             break
         else:
             ui.display_message("Invalid choice.")
