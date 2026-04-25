@@ -5,7 +5,7 @@ Gameplay remains identical across tiers.
 """
 
 from enum import Enum
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Dict, Any
 
 
@@ -157,14 +157,14 @@ class PerformanceManager:
 
     def __init__(self, initial_tier: PerformanceTier = PerformanceTier.MEDIUM):
         self.current_tier = initial_tier
-        self.settings = DEFAULT_TIER_SETTINGS[initial_tier].copy()
+        self.settings = replace(DEFAULT_TIER_SETTINGS[initial_tier])
         self.frametime_history = []
         self.max_history_length = 60  # Last 60 frames
 
     def set_tier(self, tier: PerformanceTier) -> None:
         """Change performance tier."""
         self.current_tier = tier
-        self.settings = DEFAULT_TIER_SETTINGS[tier].copy()
+        self.settings = replace(DEFAULT_TIER_SETTINGS[tier])
 
     def get_tier(self) -> PerformanceTier:
         """Get current tier."""
